@@ -2,12 +2,14 @@
 import os
 import re
 import logging
-from typing import TypeAlias
+import json
 from pathlib import Path
+from typing import TypeAlias
 import numpy as np
 from skimage.io import imread, imsave
-
 from imageops.core import crop_image, expand_image
+
+from .exceptions import SuspiciousFileOperation
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 RenameResult: TypeAlias = dict[str, str | tuple]
 
 
-def has_file(directory, checking_filename):
+def has_file(directory, checking_filename) -> bool:
     """Returns True if directory has a filename otherwise returns False."""
 
     return checking_filename in os.listdir(directory)
@@ -30,7 +32,7 @@ class File():
 
     abspath: str
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, create_new=False):
         # Raise on empty string
         if not filename:
             raise ValueError()
@@ -40,7 +42,8 @@ class File():
 
         # Raise on invalid name or missing file
         if not os.path.exists(self.abspath):
-            raise OSError(f"File {self.abspath} does not exist.")
+            if not create_new:
+                raise OSError(f"File {self.abspath} does not exist.")
 
     def get_abspath(self) -> str:
         """Get absolute path of this file"""
@@ -88,6 +91,7 @@ class File():
         return file_extension
 
     def get_parent_file_name(self) -> str:
+        """Get directory name where this file is located"""
 
         return os.path.dirname(self.abspath)
 
@@ -138,11 +142,11 @@ class File():
         new_filename = name.strip().replace(" ", "_")
         new_filename = re.sub(r"(?u)[^-\w.]", "", new_filename)
         if new_filename in {"", ".", ".."}:
-            raise Exception(f"Could not derive file name from '{name}'")
+            raise SuspiciousFileOperation(f"Could not derive file name from '{name}'")
 
         return self.rename(new_filename, force_rewrite)
 
-    def update_filename_with_version_num(self, new_name, v_num=0):
+    def update_filename_with_version_num(self, new_name, v_num=0) -> str:
         """Updates the filename with a version number if necessary,
         without adding anything if no versioning is needed
         """
@@ -156,6 +160,16 @@ class File():
                     os.path.join(self.get_parent_file_name(), name), v_num)
 
         return new_name
+
+    def read(self, encoding="utf-8") -> str | None:
+        content = ""
+        if os.path.isfile(self.abspath):
+            with open(self.abspath, 'r', encoding=encoding) as file:
+                content = file.read()
+        else:
+            return None
+
+        return content
 
     def __repr__(self) -> str:
         return f"Filename {self.abspath}"
@@ -248,3 +262,15 @@ class Directory(File):
         `filt` argument
         """
         raise NotImplementedError()
+
+    def read(self):
+        raise OSError("You cannot read from directory file.")
+
+
+class JsonFile(File):
+
+    def convert_to_dict(self) -> dict:
+        """Convert JSON content of this file into Python dictionary form."""
+
+        with open(self.get_abspath(), 'r', encoding="utf-8") as f_in:
+            return json.load(f_in)
