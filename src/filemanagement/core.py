@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from skimage.io import imread, imsave
 
-from .imageops import crop_image, expand_image
+from imageops.core import crop_image, expand_image
 
 
 logger = logging.getLogger(__name__)
