@@ -1,0 +1,19 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "filemanagement"
+version = "0.0.1"
+dependencies = [
+]
+readme = "README.md"
+keywords = ["file system", "utility", "automation"]
+license = {file = "LICENSE"}
+authors = [
+  {name = "Yuri Klar", email = "juri.klar@outlook.com"},
+]
+
+[project.urls]
+Repository = "https://github.com/yurimimi/filemanagement.git"
+Issues = "https://github.com/yurimimi/filemanagement/issues"
