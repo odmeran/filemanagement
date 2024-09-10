@@ -1,0 +1,4 @@
+scikit-image==0.22.0
+scikit-learn==1.2.1
+survey
+imageops @ git+https://github.com/yurimimi/imageops

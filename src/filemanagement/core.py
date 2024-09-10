@@ -43,7 +43,7 @@ class File():
         # Raise on invalid name or missing file
         if not os.path.exists(self.abspath):
             if not create_new:
-                raise OSError(f"File {self.abspath} does not exist.")
+                raise FileNotFoundError(f"File {self.get_abspath()} does not exist.")
 
     def get_abspath(self) -> str:
         """Get absolute path of this file"""
@@ -56,7 +56,7 @@ class File():
         path/to/file.ext -> file
         """
 
-        return Path(self.abspath).stem
+        return Path(self.get_abspath()).stem
 
     def get_root(self) -> str:
         """Get name of this file
@@ -91,7 +91,10 @@ class File():
         return file_extension
 
     def get_parent_file_name(self) -> str:
-        """Get directory name where this file is located"""
+        """Get directory name where this file is located
+
+        path/to/file.ext -> path/to
+        """
 
         return os.path.dirname(self.abspath)
 
@@ -183,7 +186,7 @@ class ImageFile(File):
         File.__init__(self, filename)
         self.image = imread(self.get_abspath())
 
-    def crop(self, args) -> None:
+    def crop(self, args: str) -> None:
         """Crop image"""
 
         self.image = crop_image(self.image, args)
@@ -232,7 +235,7 @@ class Directory(File):
 
         if not os.path.isdir(self.get_abspath()):
             logger.warning("%s is not a directory.", self.get_abspath())
-            raise OSError(f"{self.get_abspath()} is not a directory.")
+            raise NotADirectoryError(f"{self.get_abspath()} is not a directory.")
 
         self.file_list = os.listdir(self.get_abspath())
 
@@ -263,8 +266,8 @@ class Directory(File):
         """
         raise NotImplementedError()
 
-    def read(self):
-        raise OSError("You cannot read from directory file.")
+    def read(self, _):
+        raise IOError("You cannot read from directory file.")
 
 
 class JsonFile(File):
