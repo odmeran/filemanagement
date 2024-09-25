@@ -1,4 +1,11 @@
-"""Utilities suite for file management"""
+"""Utilities suite for file management.
+
+TODO:
+    - Go /TODO
+    - Get rid of skimage, it's too heavy
+
+version: 0.0.1
+"""
 import os
 import re
 import logging
@@ -25,9 +32,10 @@ def has_file(directory, checking_filename) -> bool:
 
 
 class File():
-    """Virtual file, file representation
+    """Virtual file, file representation.
 
-    - [ ] add lazy fields eval, maybe by using a decorator
+    TODO:
+        - [ ] add lazy fields eval, maybe do it by using a decorator?
     """
 
     abspath: str
@@ -46,12 +54,12 @@ class File():
                 raise FileNotFoundError(f"File {self.get_abspath()} does not exist.")
 
     def get_abspath(self) -> str:
-        """Get absolute path of this file"""
+        """Get absolute path of this file."""
 
         return self.abspath
 
     def get_base_name(self) -> str:
-        """Get base name of this file
+        """Get base name of this file.
 
         path/to/file.ext -> file
         """
@@ -59,7 +67,7 @@ class File():
         return Path(self.get_abspath()).stem
 
     def get_root(self) -> str:
-        """Get name of this file
+        """Get name of this file.
 
         path/to/file.ext -> path/to/file
         """
@@ -68,7 +76,7 @@ class File():
         return file_name
 
     def get_name(self) -> str:
-        """Get name of this file
+        """Get name of this file.
 
         path/to/file.ext -> file.ext
         """
@@ -78,7 +86,7 @@ class File():
         return self.get_base_name()
 
     def get_extension(self) -> str | None:
-        """Get extension of this file if any. If no ext returns None
+        """Get extension of this file if any. If no ext returns None.
 
         path/to/file.ext -> .ext
         """
@@ -91,7 +99,7 @@ class File():
         return file_extension
 
     def get_parent_file_name(self) -> str:
-        """Get directory name where this file is located
+        """Get directory name where this file is located.
 
         path/to/file.ext -> path/to
         """
@@ -99,7 +107,7 @@ class File():
         return os.path.dirname(self.abspath)
 
     def rename(self, new_name: str, force_rewrite: bool=False) -> RenameResult:
-        """Rename file"""
+        """Rename file."""
 
         file_name = self.get_name()
 
@@ -138,7 +146,7 @@ class File():
         return result
 
     def normalize_filename(self, force_rewrite=False) -> RenameResult:
-        """Remove bad symbols in the name of the file"""
+        """Remove bad symbols in the name of the file."""
 
         name = self.get_name()
 
@@ -151,7 +159,7 @@ class File():
 
     def update_filename_with_version_num(self, new_name, v_num=0) -> str:
         """Updates the filename with a version number if necessary,
-        without adding anything if no versioning is needed
+        without adding anything if no versioning is needed.
         """
 
         # If file with the name already exists increment version number
@@ -179,7 +187,7 @@ class File():
 
 
 class ImageFile(File):
-    """Image file manager"""
+    """Image file manager."""
     image: np.ndarray
 
     def __init__(self, filename: str):
@@ -187,17 +195,17 @@ class ImageFile(File):
         self.image = imread(self.get_abspath())
 
     def crop(self, args: str) -> None:
-        """Crop image"""
+        """Crop image."""
 
         self.image = crop_image(self.image, args)
 
     def expand(self, args) -> None:
-        """Expand image"""
+        """Expand image."""
 
         self.image = expand_image(self.image, args)
 
     def save(self, output_filename=None) -> str | Exception:
-        """Saves file with filename specified"""
+        """Saves file with filename specified."""
 
         # Set filename
         if output_filename is None:
@@ -218,7 +226,7 @@ class ImageFile(File):
 
 
 class Directory(File):
-    """Virtual directory class
+    """Virtual directory class.
 
     An object of this class is a virtual file itself. It extends file class with
     some utilities like normalize filenames in this dir, etc.
@@ -240,11 +248,11 @@ class Directory(File):
         self.file_list = os.listdir(self.get_abspath())
 
     def normalize_filenames(self, force_rewrite: bool | None = None) -> list[RenameResult]:
-        """Normalize filenames in directory
+        """Normalize filenames in directory.
 
         This script removes some 'bad'
         symbols from files' names in specified or
-        current directory (just spaces for now -3-)
+        current directory (just spaces for now)
         """
 
         change_log: list[RenameResult] = []
@@ -259,18 +267,57 @@ class Directory(File):
         return change_log
 
     def add_background(self, filt: str | None=None) -> None:
-        """Adds background to images in directory
+        """Adds background to images in directory.
 
         Image files to which background to be added can be filtered by regex with
-        `filt` argument
+        `filt` argument.
         """
         raise NotImplementedError()
 
     def read(self, _):
         raise IOError("You cannot read from directory file.")
 
+    @staticmethod
+    def copy_tree(source_path: str, destination_path: str) -> None:
+        '''Copies directory recursively.
+        Works somewhat like copy_tree. Uses `os.walk`.
+        '''
+
+        print("Inserting config... ", end='')
+        for source_root, dirs, files in os.walk(source_path, topdown=True):
+            new_root = source_root[len(source_path):].strip('/')
+
+            for name in files:
+                try:
+                    os.replace(os.path.join(source_root, name),
+                               os.path.join(destination_path, new_root, name))
+                except FileNotFoundError:
+                    # It says "there's no such directory". Does git delete it at
+                    # some point? Not sure why is this and am lazy to figure it out.
+                    pass
+            for name in dirs:
+                os.makedirs(os.path.join(destination_path, new_root, name),
+                            exist_ok=True)
+        print("Done.")
+
+    @staticmethod
+    def remove_dir_recursively(dir_path: str) -> None:
+        '''Removes directory recursively (force).
+        Somewhat like `rm <dir_path> -rf`.
+        '''
+
+        print(f"Deleting '{dir_path}'... ", end='')
+        for disposed_root, dirs, files in os.walk(dir_path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(disposed_root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(disposed_root, name))
+        os.rmdir(dir_path)
+        print("Done.")
+
 
 class JsonFile(File):
+    ''''''
 
     def convert_to_dict(self) -> dict:
         """Convert JSON content of this file into Python dictionary form."""
