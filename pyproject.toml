@@ -1,12 +1,12 @@
 [build-system]
-requires = ['setuptools']
+requires = ['setuptools', 'setuptools-scm', 'wheel']
 build-backend = 'setuptools.build_meta'
 
 [project]
 name = "filemanagement"
 version = "0.0.1"
 dependencies = [
-    "scikit-image",
+    "survey"
     "imageops @ git+https://github.com/yurimimi/imageops"
 ]
 readme = "README.md"
