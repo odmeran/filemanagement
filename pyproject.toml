@@ -6,8 +6,8 @@ build-backend = 'setuptools.build_meta'
 name = "filemanagement"
 version = "0.0.1"
 dependencies = [
-    "survey"
-    "imageops @ git+https://github.com/yurimimi/imageops"
+    "survey",
+    "imageops @ git+https://github.com/yurimimi/imageops",
 ]
 readme = "README.md"
 keywords = ["file system", "utility", "automation"]
