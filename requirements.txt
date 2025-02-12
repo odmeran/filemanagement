@@ -1,2 +1,2 @@
 survey
-imageops @ git+https://github.com/yurimimi/imageops
+imageops @ git+https://github.com/odmeran/imageops
