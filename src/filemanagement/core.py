@@ -1,27 +1,25 @@
-"""Utilities suite for file management.
+"""An utilities suite for UNIX file management.
 
 TODO:
-    - Go /TODO
-    - Get rid of skimage, it's too heavy
+    - See /TODO
 
 version: 0.0.1
 """
 import os
 import re
 import logging
-import json
 from pathlib import Path
 from typing import TypeAlias
 import numpy as np
-from skimage.io import imread, imsave
-from imageops.core import crop_image, expand_image
+#from skimage.io import imread, imsave
+#from imageops.core import crop_image, expand_image
 
 from .exceptions import SuspiciousFileOperation
 
-
+# Setup logger
 logger = logging.getLogger(__name__)
 
-
+# A type that is returned by the file rename command.
 RenameResult: TypeAlias = dict[str, str | tuple]
 
 
@@ -160,6 +158,8 @@ class File():
     def update_filename_with_version_num(self, new_name, v_num=0) -> str:
         """Updates the filename with a version number if necessary,
         without adding anything if no versioning is needed.
+
+        Does it work?
         """
 
         # If file with the name already exists increment version number
@@ -186,56 +186,17 @@ class File():
         return f"Filename {self.abspath}"
 
 
-class ImageFile(File):
-    """Image file manager."""
-    image: np.ndarray
-
-    def __init__(self, filename: str):
-        File.__init__(self, filename)
-        self.image = imread(self.get_abspath())
-
-    def crop(self, args: str) -> None:
-        """Crop image."""
-
-        self.image = crop_image(self.image, args)
-
-    def expand(self, args) -> None:
-        """Expand image."""
-
-        self.image = expand_image(self.image, args)
-
-    def save(self, output_filename=None) -> str | Exception:
-        """Saves file with filename specified."""
-
-        # Set filename
-        if output_filename is None:
-            output_filename = self.get_name()
-
-        # If file already exists update filename
-        self.abspath = os.path.join(self.get_parent_file_name(),
-                                    self.update_filename_with_version_num(output_filename))
-        logger.debug("Saved as %s", self.abspath)
-
-        try:
-            imsave(self.abspath, self.image)
-        except Exception as e:
-            logger.error(e)
-            return e
-
-        return self.get_name()
-
-
 class Directory(File):
     """Virtual directory class.
 
-    An object of this class is a virtual file itself. It extends file class with
-    some utilities like normalize filenames in this dir, etc.
-    The object of this class contains a flat (w/o dir objects) list of its children
-    files [!] just a list of abs paths as strings for now.
+    An object of this class is a virtual file itself. It extends file class
+    with some utilities like normalize filenames in this dir, etc.
+    The object of this class contains a flat (w/o dir objects) list of its
+    children files(!) just a list of abs paths as strings for now.
 
-    I'm not sure about if it does worth it cuz having all the files in the dir as 
-    objects, and even before this -- instantiate every single of -- could be quite
-    expensive.
+    I'm not sure about if it does worth it cuz having all the files in the
+    dir as objects, and even before this -- instantiate every single of --
+    could be expensive.
     """
 
     def __init__(self, filename: str):
@@ -250,9 +211,8 @@ class Directory(File):
     def normalize_filenames(self, force_rewrite: bool | None = None) -> list[RenameResult]:
         """Normalize filenames in directory.
 
-        This script removes some 'bad'
-        symbols from files' names in specified or
-        current directory (just spaces for now)
+        This script removes 'bad' symbols from files' names in the specified
+        or current directory
         """
 
         change_log: list[RenameResult] = []
@@ -314,13 +274,3 @@ class Directory(File):
                 os.rmdir(os.path.join(disposed_root, name))
         os.rmdir(dir_path)
         print("Done.")
-
-
-class JsonFile(File):
-    ''''''
-
-    def convert_to_dict(self) -> dict:
-        """Convert JSON content of this file into Python dictionary form."""
-
-        with open(self.get_abspath(), 'r', encoding="utf-8") as f_in:
-            return json.load(f_in)

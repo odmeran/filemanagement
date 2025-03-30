@@ -1,2 +1,0 @@
-survey
-imageops @ git+https://github.com/odmeran/imageops
